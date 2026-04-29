@@ -8,9 +8,12 @@ import "../src/GBNToken.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 
+
 contract MinerManagerTest is Test {
     MinerManager minerManager;
     GBNToken token;
+
+    uint256 constant GBN_UNIT = 1e18;
 
     address user = address(0xCAFE);
 
@@ -47,7 +50,7 @@ contract MinerManagerTest is Test {
         assertEq(token.name(), "GoBenoit");
         assertEq(token.symbol(), "GBN");
 
-        assertEq(minerManager.MINER_COST(), 100 ether);
+        assertEq(minerManager.MINER_COST(), 100 * GBN_UNIT);
     }
 
     function testBuyTokens() public{
@@ -60,7 +63,7 @@ contract MinerManagerTest is Test {
         minerManager.buyTokens{value: 0.1 ether}();
 
         uint256 balance = token.balanceOf(bob);
-        assertEq(balance, 100 ether);
+        assertEq(balance, 100 * GBN_UNIT);
     }
 
     function bobBuyMiner() public{
@@ -81,7 +84,7 @@ contract MinerManagerTest is Test {
         assertGt(lastClaim, 0);
     }
 
-    function getFeePerDayTest() public{
+    function testGetFeePerDayFor1User() public{
         address bob = address(0xB0B);
         vm.deal(bob, 1 ether);
 
@@ -89,11 +92,48 @@ contract MinerManagerTest is Test {
         minerManager.buyTokens{value: 0.1 ether}();
 
         uint256 balance = token.balanceOf(bob);
-        assertEq(balance, 100 ether);
+        assertEq(balance, 100 * GBN_UNIT);
 
         vm.prank(bob);
         uint256 fee = minerManager.getFeePerDay();
 
-        assertEq(fee, 1 ether);
+        assertEq(fee, 1 * GBN_UNIT);
+    }
+
+    function testGetFeePerDayTestFor100Users() public {
+        for( uint256 i = 0; i < 100; i++) {
+            address user = address(uint160(i + 1));
+            vm.deal(user, 1 ether);
+
+            vm.prank(user);
+            minerManager.buyTokens{value: 0.1 ether}();
+        }
+
+        uint256 fee = minerManager.getFeePerDay();
+        assertEq(fee, 2 * GBN_UNIT);
+    }
+
+    function testgetRewardPerDayFor1User() public {
+        address bob = address(0xB0B);
+        vm.deal(bob, 1 ether);
+
+        vm.prank(bob);
+        minerManager.buyTokens{value: 0.1 ether}();
+
+        vm.prank(bob);
+        minerManager.buyMiner();
+
+        uint256 reward = minerManager.getRewardPerDay();
+        assertEq(reward, 2 * GBN_UNIT);
+    }
+
+    function testgetRewardPerDayFor100Users() public {
+        for( uint256 i = 0; i < 100; i++) {
+            address user = address(uint160(i + 1));
+            vm.deal(user, 1 ether);
+
+            vm.prank(user);
+            minerManager.buyTokens{value: 0.1 ether}();
+        }
     }
 }

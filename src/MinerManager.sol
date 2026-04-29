@@ -6,81 +6,110 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-
 import "./GBNToken.sol";
 
-contract MinerManager is  Initializable, OwnableUpgradeable, UUPSUpgradeable, PausableUpgradeable {
+contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, PausableUpgradeable {
     GBNToken public token;
 
     uint256 public constant MINER_COST = 100 ether;
     uint256 public rate;
 
+    uint256 public rewardIndex;
+    uint256 public feeIndex;
+    uint256 public lastUpdate;
+
     struct User {
         uint256 miners;
-        uint256 lastClaim;
+        uint256 rewardDebt;
+        uint256 feeDebt;
     }
 
     mapping(address => User) public users;
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
+    modifier userPurchasedOneMinerAtLeast() {
+        require(users[msg.sender].miners > 0, "Buy a miner first");
+        _;
+    }
+
     constructor() {
         _disableInitializers();
     }
 
-    // 🔥 Buy miner (burn tokens)
-    function buyMiner() external {
-        token.burnFrom(msg.sender, MINER_COST);
+    function _updateIndex() internal {
+        uint256 timePassed = block.timestamp - lastUpdate;
+        if (timePassed == 0) return;
 
-        users[msg.sender].miners += 1;
-        users[msg.sender].lastClaim = block.timestamp;
-    }
+        uint256 supply = token.totalSupply() / 1000 ether;
 
-
-    function getRewardPerDay() public view returns (uint256) {
         uint256 baseReward = 2 ether;
-        uint256 supplyFactor = token.totalSupply() / 1000 ether;
-
-        return baseReward * 1000 / (1000 + supplyFactor);
-    }
-
-  
-    function getFeePerDay() public view returns (uint256) {
         uint256 baseFee = 1 ether;
-        uint256 supplyFactor = token.totalSupply() / 1000 ether;
 
-        return baseFee + (supplyFactor / 10);
+        uint256 rewardPerDay =
+            (baseReward * 1000) / (1000 + supply);
+
+        uint256 feePerDay =
+            baseFee + (supply * 1 ether / 10);
+
+        rewardIndex += (rewardPerDay * timePassed) / 1 days;
+        feeIndex += (feePerDay * timePassed) / 1 days;
+
+        lastUpdate = block.timestamp;
     }
 
-  
-    function claim() external {
+    function buyMiner() external whenNotPaused {
+        _updateIndex();
+
         User storage user = users[msg.sender];
 
-        uint256 timePassed = block.timestamp - user.lastClaim;
-        require(timePassed > 0, "Nothing to claim");
+        _claimInternal(msg.sender);
 
-        uint256 rewardPerDay = getRewardPerDay();
-        uint256 feePerDay = getFeePerDay();
+        token.burnFrom(msg.sender, MINER_COST);
 
-        uint256 reward = (rewardPerDay * user.miners * timePassed) / 1 days;
-        uint256 fee = (feePerDay * user.miners * timePassed) / 1 days;
+        user.miners += 1;
 
-        uint256 net = reward > fee ? reward - fee : 0;
-
-        user.lastClaim = block.timestamp;
-
-        // 🪙 Mint reward
-        token.mint(msg.sender, net);
-
-        // 🔥 Burn fee
-        token.mint(address(this), fee);
-        token.burnFrom(address(this), fee);
+        user.rewardDebt = user.miners * rewardIndex;
+        user.feeDebt = user.miners * feeIndex;
     }
 
-    function buyTokens() external payable {
+    function claim() external whenNotPaused userPurchasedOneMinerAtLeast {
+        _updateIndex();
+        _claimInternal(msg.sender);
+    }
+
+    function _claimInternal(address userAddr) internal {
+        User storage user = users[userAddr];
+
+        if (user.miners == 0) return;
+
+        uint256 accumulatedReward =
+            user.miners * rewardIndex;
+
+        uint256 accumulatedFee =
+            user.miners * feeIndex;
+
+        uint256 pendingReward =
+            accumulatedReward - user.rewardDebt;
+
+        uint256 pendingFee =
+            accumulatedFee - user.feeDebt;
+
+        uint256 net =
+            pendingReward > pendingFee
+                ? pendingReward - pendingFee
+                : 0;
+
+        user.rewardDebt = accumulatedReward;
+        user.feeDebt = accumulatedFee;
+
+        if (net > 0) {
+            token.mint(userAddr, net);
+        }
+    }
+
+    function buyTokens() external payable whenNotPaused {
         require(msg.value > 0, "Send ETH");
 
         uint256 amount = msg.value * rate;
-
         token.mint(msg.sender, amount);
     }
 
@@ -97,11 +126,10 @@ contract MinerManager is  Initializable, OwnableUpgradeable, UUPSUpgradeable, Pa
         __Pausable_init();
 
         token = GBNToken(_token);
-        rate = 1000; // 1 ETH = 1000 GBN
+        rate = 1000;
+
+        lastUpdate = block.timestamp;
     }
 
-    // REQUIRED by UUPS
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner{
-
-    }
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }
