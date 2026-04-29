@@ -18,6 +18,8 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
     uint256 public feeIndex;
     uint256 public lastUpdate;
 
+    address public treasury;
+
     struct User {
         uint256 miners;
         uint256 rewardDebt;
@@ -33,6 +35,22 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
 
     constructor() {
         _disableInitializers();
+    }
+
+    function pendingReward(address userAddr) public view returns (uint256) {
+        User memory user = users[userAddr];
+
+        uint256 supply = token.totalSupply() / 1000 ether;
+
+        uint256 rewardPerDay = (2 ether * 1000) / (1000 + supply);
+
+        uint256 elapsed = block.timestamp - lastUpdate;
+
+        uint256 currentIndex = rewardIndex + (rewardPerDay * elapsed) / 1 days;
+
+        uint256 accumulated = user.miners * currentIndex;
+
+        return accumulated - user.rewardDebt;
     }
 
     function _updateIndex() internal {
@@ -61,7 +79,7 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
 
         User storage user = users[msg.sender];
 
-        _claimInternal(msg.sender);
+        _claim(msg.sender);
 
         token.burnFrom(msg.sender, MINER_COST);
 
@@ -73,10 +91,14 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
 
     function claim() external whenNotPaused userPurchasedOneMinerAtLeast {
         _updateIndex();
-        _claimInternal(msg.sender);
+        _claim(msg.sender);
     }
 
-    function _claimInternal(address userAddr) internal {
+    function setTreasury(address _treasury) external onlyOwner {
+        treasury = _treasury; 
+    }
+
+    function _claim(address userAddr) internal {
         User storage user = users[userAddr];
 
         if (user.miners == 0) return;
@@ -93,16 +115,27 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
         uint256 pendingFee =
             accumulatedFee - user.feeDebt;
 
-        uint256 net =
-            pendingReward > pendingFee
-                ? pendingReward - pendingFee
-                : 0;
-
         user.rewardDebt = accumulatedReward;
         user.feeDebt = accumulatedFee;
 
-        if (net > 0) {
-            token.mint(userAddr, net);
+        if (pendingReward > 0) {
+            token.mint(userAddr, pendingReward);
+        }
+
+        if (pendingFee > 0) {
+            uint256 burnPart = (pendingFee * 50) / 100;
+            uint256 treasuryPart = pendingFee - burnPart;
+
+            
+            if (treasuryPart > 0) {
+                token.mint(treasury, treasuryPart);
+            }
+
+            
+            if (burnPart > 0) {
+                token.mint(address(this), burnPart);
+                token.burnFrom(address(this), burnPart);
+            }
         }
     }
 
@@ -129,6 +162,7 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
         rate = 1000;
 
         lastUpdate = block.timestamp;
+        treasury = msg.sender;
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}

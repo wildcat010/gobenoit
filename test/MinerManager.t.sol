@@ -5,6 +5,8 @@ import "forge-std/Test.sol";
 import "../src/MinerManager.sol";
 import "../src/GBNToken.sol";
 
+import "forge-std/console.sol";
+
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 
@@ -78,62 +80,71 @@ contract MinerManagerTest is Test {
         vm.stopPrank();
 
         // ✅ destructure tuple correctly
-        (uint256 miners, uint256 lastClaim) = minerManager.users(bob);
+        (uint256 miners, uint256 rewardDebt, uint256 feeDebt) = minerManager.users(bob);
 
         assertEq(miners, 1);
-        assertGt(lastClaim, 0);
+        assertGt(rewardDebt, 0);
+        assertGt(feeDebt, 0);
     }
 
-    function testGetFeePerDayFor1User() public{
+    function testPendingRewardAfter3Days() public {
+        
         address bob = address(0xB0B);
         vm.deal(bob, 1 ether);
 
-        vm.prank(bob);
+        vm.startPrank(bob);
+
         minerManager.buyTokens{value: 0.1 ether}();
+        token.approve(address(minerManager), 100 ether);
 
-        uint256 balance = token.balanceOf(bob);
-        assertEq(balance, 100 * GBN_UNIT);
+        console.log("balance 1",token.balanceOf(bob));
 
-        vm.prank(bob);
-        uint256 fee = minerManager.getFeePerDay();
-
-        assertEq(fee, 1 * GBN_UNIT);
-    }
-
-    function testGetFeePerDayTestFor100Users() public {
-        for( uint256 i = 0; i < 100; i++) {
-            address user = address(uint160(i + 1));
-            vm.deal(user, 1 ether);
-
-            vm.prank(user);
-            minerManager.buyTokens{value: 0.1 ether}();
-        }
-
-        uint256 fee = minerManager.getFeePerDay();
-        assertEq(fee, 2 * GBN_UNIT);
-    }
-
-    function testgetRewardPerDayFor1User() public {
-        address bob = address(0xB0B);
-        vm.deal(bob, 1 ether);
-
-        vm.prank(bob);
-        minerManager.buyTokens{value: 0.1 ether}();
-
-        vm.prank(bob);
         minerManager.buyMiner();
 
-        uint256 reward = minerManager.getRewardPerDay();
-        assertEq(reward, 2 * GBN_UNIT);
+
+        console.log("balance 2",token.balanceOf(bob));
+
+        vm.stopPrank();
+
+        uint256 initialTokenBalance = token.balanceOf(bob);
+        uint256 initialPending = minerManager.pendingReward(bob);
+
+        vm.warp(block.timestamp + 3 days);
+
+        uint256 laterPending = minerManager.pendingReward(bob);
+        
+        console.log("initialPending", initialPending);
+        console.log("laterPending", laterPending);
+
+        assertGt(laterPending, initialPending);
     }
 
-    function testgetRewardPerDayFor100Users() public {
+    function testPendingRewardAfter3DaysFor100Users() public {
         for( uint256 i = 0; i < 100; i++) {
             address user = address(uint160(i + 1));
             vm.deal(user, 1 ether);
 
-            vm.prank(user);
+            vm.startPrank(user);
             minerManager.buyTokens{value: 0.1 ether}();
+            token.approve(address(minerManager), 100 ether);
+            if(i % 2 == 0) {
+                minerManager.buyMiner();
+            }
+
+            vm.stopPrank();
         }
+
+        console.log("totalSupply",token.totalSupply());
+        assertEq(token.totalSupply(), 5000 * GBN_UNIT);
+
+        vm.warp(block.timestamp + 3 days);
+
+        address user = address(uint160(1));
+        vm.prank(user);
+        uint256 laterPending = minerManager.pendingReward(user);
+        console.log("laterPending",laterPending);
+        assertEq(laterPending, 5970149253731343282);
     }
+
+   
 }
