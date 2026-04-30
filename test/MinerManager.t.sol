@@ -146,5 +146,74 @@ contract MinerManagerTest is Test {
         assertEq(laterPending, 5970149253731343282);
     }
 
+    function testPauseFeature() public {
+        address bob = address(0xB0B);
+        vm.deal(bob, 1 ether);
+
+        vm.startPrank(bob);
+        minerManager.buyTokens{value: 0.1 ether}();
+        token.approve(address(minerManager), 100 ether);
+
+        vm.stopPrank();
+
+
+        minerManager.pause();
+
+        vm.expectRevert();
+        minerManager.buyMiner();
+
+       
+    }
+
+    function testTreasoryBalanceAfterClaim() public {
+        address bob = address(0xB0B);
+        vm.deal(bob, 2000 ether);
+
+        vm.startPrank(bob);
+
+        minerManager.buyTokens{value: 0.1 ether}();
+
+        token.approve(address(minerManager), 100 ether);
+        minerManager.buyMiner();
+
+        vm.stopPrank();
+
+        vm.warp(block.timestamp + 3 days);
+
+        uint256 pendingBefore = minerManager.pendingReward(bob);
+        console.log("pendingBefore", pendingBefore);
+        assertEq(pendingBefore, 6 * GBN_UNIT);
+    }
+
+    function testResetPendingRewardsAfterClaim() public {
+        address bob = address(0xB0B);
+        vm.deal(bob, 2000 ether);
+
+        vm.startPrank(bob);
+
+        minerManager.buyTokens{value: 0.1 ether}();
+        
+        token.approve(address(minerManager), 100 ether);
+        minerManager.buyMiner();
+
+        //simulate supply over 1000 GBN to reduce rewards and test calculations
+        minerManager.buyTokens{value: 1000 ether}(); // → 1,000,000 GBN
+
+        vm.stopPrank();
+
+        vm.warp(block.timestamp + 3 days);
+
+        uint256 pendingBefore = minerManager.pendingReward(bob);
+        console.log("pendingBefore", pendingBefore);
+        assertEq(pendingBefore, 3 * GBN_UNIT);
+
+        vm.prank(bob);
+        minerManager.claim();
+
+        uint256 pendingAfter = minerManager.pendingReward(bob);
+        console.log("pendingAfter", pendingAfter);
+
+        assertEq(pendingAfter, 0);
+    }
    
 }
