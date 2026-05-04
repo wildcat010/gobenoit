@@ -215,5 +215,61 @@ contract MinerManagerTest is Test {
 
         assertEq(pendingAfter, 0);
     }
+
+    function testTreasuryMustBe50Percent() public {
+         address bob = address(0xB0B);
+        vm.deal(bob, 2000 ether);
+
+        vm.startPrank(bob);
+
+        minerManager.buyTokens{value: 0.1 ether}();
+        
+
+        token.approve(address(minerManager), 100 ether);
+        minerManager.buyMiner();
+
+        vm.stopPrank();
+
+        uint256 totalSupply = token.totalSupply();
+
+        vm.warp(block.timestamp + 10 days);
+
+        //  Capture state BEFORE claim
+        uint256 treasuryBefore = token.balanceOf(minerManager.treasury());
+        uint256 supplyBefore = token.totalSupply();
+
+        vm.prank(bob);
+        minerManager.claim();
+
+        //  Capture state AFTER claim
+        uint256 treasuryAfter = token.balanceOf(minerManager.treasury());
+        uint256 supplyAfter = token.totalSupply();
+        uint256 userBalance = token.balanceOf(bob);
+
+        uint256 treasuryGain = treasuryAfter - treasuryBefore;
+        uint256 supplyIncrease = supplyAfter - supplyBefore;
+
+        //  Expected values (from your math)
+        // reward = 2/day → 20 GBN
+        // fee    = 1/day → 10 GBN
+        // split  = 5 burn + 5 treasury
+
+        uint256 expectedReward = 20 ether;
+        uint256 expectedTreasury = 5 ether;
+
+        // User gets full reward
+        assertEq(userBalance, expectedReward);
+
+        // Treasury gets 50% of fee
+        assertEq(treasuryGain, expectedTreasury);
+
+        // Total supply = reward + treasury (burn already removed)
+        assertEq(supplyIncrease, expectedReward + expectedTreasury);
+
+        // Optional invariant: treasury = half of fee
+        // fee = 10 → treasury = 5
+        assertEq(treasuryGain * 2, 10 ether);
+
+    }
    
 }
