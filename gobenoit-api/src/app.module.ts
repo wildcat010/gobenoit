@@ -2,11 +2,13 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MinerController } from './miner/miner.controller';
-import { BlockchainService } from './blockchain/blockchain.service';
-import { TokenController } from './token/token.controller';
+
+import { AuthService } from './auth.service';
+import { UsersModule } from './mongo/users/users.module';
+import { MinerModule } from './miner/miner.module';
+import { TokenModule } from './token/token.module';
+import { BlockchainModule } from './blockchain/blockchain.module';
 
 @Module({
   imports: [
@@ -15,8 +17,12 @@ import { TokenController } from './token/token.controller';
     }),
 
     MongooseModule.forRoot(process.env.MONGO_URI!),
+
+    MinerModule,
+    TokenModule,
+    UsersModule,
+    BlockchainModule,
   ],
-  controllers: [AppController, MinerController, TokenController],
-  providers: [AppService, BlockchainService],
+  providers: [AppService, AuthService],
 })
 export class AppModule {}
