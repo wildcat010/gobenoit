@@ -14,9 +14,7 @@ import { TokenController } from './token/token.controller';
       isGlobal: true,
     }),
 
-    MongooseModule.forRoot(
-      'mongodb+srv://benoitbourgeoninfo_db_user:1gGuhtzuaStxhJ81@cluster0.cobkrjc.mongodb.net/gobenoit?retryWrites=true&w=majority',
-    ),
+    MongooseModule.forRoot(process.env.MONGO_URI!),
   ],
   controllers: [AppController, MinerController, TokenController],
   providers: [AppService, BlockchainService],
