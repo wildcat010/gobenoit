@@ -11,8 +11,8 @@ export class UsersService {
     private userModel: Model<UserDocument>,
   ) {}
 
-  async create(email: string, password: string) {
-    return this.userModel.create({ email, password });
+  async create(email: string, password: string, address: string) {
+    return this.userModel.create({ email, password, address });
   }
 
   async findByEmail(email: string) {
@@ -21,5 +21,9 @@ export class UsersService {
 
   async findById(id: string) {
     return this.userModel.findById(id);
+  }
+
+  async findAll() {
+    return this.userModel.find();
   }
 }
