@@ -74,16 +74,23 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
         lastUpdate = block.timestamp;
     }
 
-    function buyMiner() external whenNotPaused {
+    function buyMiner(uint256 quantity) external whenNotPaused {
+        require(quantity > 0, "Quantity must be greater than 0");
+        
+        uint256 totalCost = MINER_COST * quantity;
+        
+        // check balance before doing anything
+        require(token.balanceOf(msg.sender) >= totalCost, "Insufficient GBN balance");
+
         _updateIndex();
 
         User storage user = users[msg.sender];
 
         _claim(msg.sender);
 
-        token.burnFrom(msg.sender, MINER_COST);
+        token.burnFrom(msg.sender, totalCost); // 👈 burn all at once
 
-        user.miners += 1;
+        user.miners += quantity; // 👈 add quantity instead of 1
 
         user.rewardDebt = user.miners * rewardIndex;
         user.feeDebt = user.miners * feeIndex;

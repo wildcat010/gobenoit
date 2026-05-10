@@ -75,7 +75,7 @@ contract MinerManagerTest is Test {
         vm.startPrank(bob);
         minerManager.buyTokens{value: 0.1 ether}();
 
-        minerManager.buyMiner();
+        minerManager.buyMiner(1);
 
         vm.stopPrank();
 
@@ -99,7 +99,7 @@ contract MinerManagerTest is Test {
 
         console.log("balance 1",token.balanceOf(bob));
 
-        minerManager.buyMiner();
+        minerManager.buyMiner(1);
 
 
         console.log("balance 2",token.balanceOf(bob));
@@ -128,7 +128,7 @@ contract MinerManagerTest is Test {
             minerManager.buyTokens{value: 0.1 ether}();
             token.approve(address(minerManager), 100 ether);
             if(i % 2 == 0) {
-                minerManager.buyMiner();
+                minerManager.buyMiner(1);
             }
 
             vm.stopPrank();
@@ -160,7 +160,7 @@ contract MinerManagerTest is Test {
         minerManager.pause();
 
         vm.expectRevert();
-        minerManager.buyMiner();
+        minerManager.buyMiner(1);
 
        
     }
@@ -174,7 +174,7 @@ contract MinerManagerTest is Test {
         minerManager.buyTokens{value: 0.1 ether}();
 
         token.approve(address(minerManager), 100 ether);
-        minerManager.buyMiner();
+        minerManager.buyMiner(1);
 
         vm.stopPrank();
 
@@ -194,7 +194,7 @@ contract MinerManagerTest is Test {
         minerManager.buyTokens{value: 0.1 ether}();
         
         token.approve(address(minerManager), 100 ether);
-        minerManager.buyMiner();
+        minerManager.buyMiner(1);
 
         //simulate supply over 1000 GBN to reduce rewards and test calculations
         minerManager.buyTokens{value: 1000 ether}(); // → 1,000,000 GBN
@@ -226,7 +226,7 @@ contract MinerManagerTest is Test {
         
 
         token.approve(address(minerManager), 100 ether);
-        minerManager.buyMiner();
+        minerManager.buyMiner(1);
 
         vm.stopPrank();
 

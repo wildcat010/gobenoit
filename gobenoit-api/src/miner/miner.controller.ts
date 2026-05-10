@@ -1,14 +1,22 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { BlockchainService } from './../blockchain/blockchain.service';
 
 import { parseEther } from 'viem';
 import { MINER_MANAGER_ABI } from 'src/blockchain/abis/minerManager.abi';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from './../auth/jwt.guard';
+import { MinerService } from './miner.service';
+
 const MINER_MANAGER_ADDRESS = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
 
+@UseGuards(JwtAuthGuard)
 @Controller('miner')
 export class MinerController {
-  constructor(private readonly blockchainService: BlockchainService) {}
+  constructor(
+    private readonly blockchainService: BlockchainService,
+    private minerService: MinerService,
+  ) {}
 
   @Get()
   getMiner(): string {
@@ -19,26 +27,18 @@ export class MinerController {
   async buyTokens(
     @Body() body: { privateKey: `0x${string}`; ethAmount: string },
   ) {
-    const walletClient = this.blockchainService.getWalletClient(
-      body.privateKey,
-    );
+    return this.minerService.buyTokens(body.ethAmount, body.privateKey);
+  }
 
-    const txHash = await walletClient.writeContract({
-      address: MINER_MANAGER_ADDRESS,
-      abi: MINER_MANAGER_ABI,
-      functionName: 'buyTokens',
-      value: parseEther(body.ethAmount), // e.g. "0.1"
-    });
+  @Get('getBalanceof')
+  async getBalance(@Query('address') address: `0x${string}`) {
+    return this.minerService.getBalanceOf(address);
+  }
 
-    const receipt =
-      await this.blockchainService.client.waitForTransactionReceipt({
-        hash: txHash,
-      });
-
-    return {
-      txHash,
-      status: receipt.status, // "success" or "reverted"
-      blockNumber: receipt.blockNumber.toString(),
-    };
+  @Post('buy-miner')
+  async buyMiner(
+    @Body() body: { privateKey: `0x${string}`; quantity: number },
+  ) {
+    return this.minerService.buyMiner(body.quantity, body.privateKey);
   }
 }

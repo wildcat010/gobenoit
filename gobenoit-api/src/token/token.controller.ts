@@ -3,8 +3,11 @@ import { BlockchainService } from './../blockchain/blockchain.service';
 import { GBN_TOKEN_ABI } from './../blockchain/abis/GBNToken.abi';
 import { formatUnits } from 'viem';
 
-const GBN_TOKEN_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'; // your GBNToken proxy
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from './../auth/jwt.guard';
 
+const GBN_TOKEN_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'; // your GBNToken proxy
+@UseGuards(JwtAuthGuard)
 @Controller('token')
 export class TokenController {
   constructor(private readonly blockchainService: BlockchainService) {}
