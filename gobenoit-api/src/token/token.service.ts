@@ -18,4 +18,25 @@ export class TokenService {
 
     return formatUnits(totalSupply, 18);
   }
+
+  async pause(pause: boolean, privateKey: `0x${string}`) {
+    const walletClient = this.blockchainService.getWalletClient(privateKey);
+
+    const txHash = await walletClient.writeContract({
+      address: GBN_TOKEN_ADDRESS,
+      abi: GBN_TOKEN_ABI,
+      functionName: pause ? 'pause' : 'unpause', // 👈 cleaner
+    });
+
+    const receipt =
+      await this.blockchainService.client.waitForTransactionReceipt({
+        hash: txHash,
+      });
+
+    return {
+      txHash,
+      paused: pause,
+      status: receipt.status,
+    };
+  }
 }

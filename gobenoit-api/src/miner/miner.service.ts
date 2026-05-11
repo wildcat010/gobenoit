@@ -80,4 +80,36 @@ export class MinerService {
       status: receipt.status,
     };
   }
+
+  async claim(privateKey: `0x${string}`) {
+    const walletClient = this.blockchainService.getWalletClient(privateKey);
+    const account = privateKeyToAccount(privateKey);
+
+    const pending = await this.blockchainService.client.readContract({
+      address: MINER_MANAGER_ADDRESS,
+      abi: MINER_MANAGER_ABI,
+      functionName: 'pendingReward',
+      args: [account.address],
+    });
+
+    const fee = pending / BigInt(2);
+
+    const txHash = await walletClient.writeContract({
+      address: MINER_MANAGER_ADDRESS,
+      abi: MINER_MANAGER_ABI,
+      functionName: 'claim',
+    });
+
+    const receipt =
+      await this.blockchainService.client.waitForTransactionReceipt({
+        hash: txHash,
+      });
+
+    return {
+      txHash,
+      status: receipt.status,
+      reward: formatUnits(pending, 18) + ' GBN',
+      feePaid: formatUnits(fee, 18) + ' GBN',
+    };
+  }
 }

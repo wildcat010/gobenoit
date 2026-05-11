@@ -41,4 +41,9 @@ export class MinerController {
   ) {
     return this.minerService.buyMiner(body.quantity, body.privateKey);
   }
+
+  @Post('claim-reward')
+  async claim(@Body() body: { privateKey: `0x${string}` }) {
+    return this.minerService.claim(body.privateKey);
+  }
 }
