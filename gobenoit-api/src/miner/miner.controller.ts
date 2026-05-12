@@ -46,4 +46,14 @@ export class MinerController {
   async claim(@Body() body: { privateKey: `0x${string}` }) {
     return this.minerService.claim(body.privateKey);
   }
+
+  @Post('pending-reward')
+  async pendingReward(@Body() body: { address: `0x${string}` }) {
+    return this.minerService.pendingReward(body.address);
+  }
+
+  @Post('pause')
+  async pause(@Body() body: { pause: boolean; privateKey: `0x${string}` }) {
+    return this.minerService.pause(body.pause, body.privateKey);
+  }
 }

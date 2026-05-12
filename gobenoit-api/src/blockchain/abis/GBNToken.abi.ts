@@ -47,4 +47,9 @@ export const GBN_TOKEN_ABI = [
     ],
     outputs: [],
   },
+  {
+    type: 'error',
+    name: 'EnforcedPause',
+    inputs: [],
+  },
 ] as const;
