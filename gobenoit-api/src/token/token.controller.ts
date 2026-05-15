@@ -23,11 +23,13 @@ export class TokenController {
 
   @Get('total-supply')
   async getTotalSupply(): Promise<string> {
-    const totalSupply = await this.blockchainService.client.readContract({
-      address: GBN_TOKEN_ADDRESS,
-      abi: GBN_TOKEN_ABI,
-      functionName: 'totalSupply',
-    });
+    const totalSupply = await this.blockchainService
+      .getPublicClient()
+      .readContract({
+        address: GBN_TOKEN_ADDRESS,
+        abi: GBN_TOKEN_ABI,
+        functionName: 'totalSupply',
+      });
 
     // returns human-readable GBN amount (divides by 1e18)
     return formatUnits(totalSupply, 18);

@@ -10,11 +10,13 @@ export class TokenService {
   constructor(private readonly blockchainService: BlockchainService) {}
 
   async getTotalSupply(): Promise<string> {
-    const totalSupply = await this.blockchainService.client.readContract({
-      address: GBN_TOKEN_ADDRESS,
-      abi: GBN_TOKEN_ABI,
-      functionName: 'totalSupply',
-    });
+    const totalSupply = await this.blockchainService
+      .getPublicClient()
+      .readContract({
+        address: GBN_TOKEN_ADDRESS,
+        abi: GBN_TOKEN_ABI,
+        functionName: 'totalSupply',
+      });
 
     return formatUnits(totalSupply, 18);
   }
@@ -25,11 +27,12 @@ export class TokenService {
     const txHash = await walletClient.writeContract({
       address: GBN_TOKEN_ADDRESS,
       abi: GBN_TOKEN_ABI,
-      functionName: pause ? 'pause' : 'unpause', // 👈 cleaner
+      functionName: pause ? 'pause' : 'unpause',
     });
 
-    const receipt =
-      await this.blockchainService.client.waitForTransactionReceipt({
+    const receipt = await this.blockchainService
+      .getPublicClient()
+      .waitForTransactionReceipt({
         hash: txHash,
       });
 

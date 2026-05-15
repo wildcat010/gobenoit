@@ -3,8 +3,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 
 import { AppService } from './app.service';
-
 import { AuthService } from './auth.service';
+
 import { UsersModule } from './users/users.module';
 import { MinerModule } from './miner/miner.module';
 import { TokenModule } from './token/token.module';

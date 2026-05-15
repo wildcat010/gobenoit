@@ -39,12 +39,14 @@ export class MinerService {
   }
 
   async getBalanceOf(address: `0x${string}`) {
-    const balance = await this.blockchainService.client.readContract({
-      address: GBN_TOKEN_ADDRESS,
-      abi: GBN_TOKEN_ABI,
-      functionName: 'balanceOf',
-      args: [address],
-    });
+    const balance = await this.blockchainService
+      .getPublicClient()
+      .readContract({
+        address: GBN_TOKEN_ADDRESS,
+        abi: GBN_TOKEN_ABI,
+        functionName: 'balanceOf',
+        args: [address],
+      });
 
     return {
       address,
@@ -73,8 +75,9 @@ export class MinerService {
         args: [BigInt(quantity)],
       });
 
-      const receipt =
-        await this.blockchainService.client.waitForTransactionReceipt({
+      const receipt = await this.blockchainService
+        .getPublicClient()
+        .waitForTransactionReceipt({
           hash: txHash,
         });
 
@@ -102,12 +105,14 @@ export class MinerService {
     const walletClient = this.blockchainService.getWalletClient(privateKey);
     const account = privateKeyToAccount(privateKey);
 
-    const pending = (await this.blockchainService.client.readContract({
-      address: MINER_MANAGER_ADDRESS,
-      abi: MINER_MANAGER_ABI,
-      functionName: 'pendingReward',
-      args: [account.address],
-    })) as bigint;
+    const pending = (await this.blockchainService
+      .getPublicClient()
+      .readContract({
+        address: MINER_MANAGER_ADDRESS,
+        abi: MINER_MANAGER_ABI,
+        functionName: 'pendingReward',
+        args: [account.address],
+      })) as bigint;
 
     const fee = pending / BigInt(2);
 
@@ -117,8 +122,9 @@ export class MinerService {
       functionName: 'claim',
     });
 
-    const receipt =
-      await this.blockchainService.client.waitForTransactionReceipt({
+    const receipt = await this.blockchainService
+      .getPublicClient()
+      .waitForTransactionReceipt({
         hash: txHash,
       });
 
@@ -131,12 +137,14 @@ export class MinerService {
   }
 
   async pendingReward(address: `0x${string}`) {
-    const pending = (await this.blockchainService.client.readContract({
-      address: MINER_MANAGER_ADDRESS,
-      abi: MINER_MANAGER_ABI,
-      functionName: 'pendingReward',
-      args: [address],
-    })) as bigint;
+    const pending = (await this.blockchainService
+      .getPublicClient()
+      .readContract({
+        address: MINER_MANAGER_ADDRESS,
+        abi: MINER_MANAGER_ABI,
+        functionName: 'pendingReward',
+        args: [address],
+      })) as bigint;
 
     return {
       address: address,
@@ -152,8 +160,9 @@ export class MinerService {
       functionName: pause ? 'pause' : 'unpause',
     });
 
-    const receipt =
-      await this.blockchainService.client.waitForTransactionReceipt({
+    const receipt = await this.blockchainService
+      .getPublicClient()
+      .waitForTransactionReceipt({
         hash: txHash,
       });
 
