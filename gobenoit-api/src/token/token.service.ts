@@ -3,7 +3,7 @@ import { BlockchainService } from '../blockchain/blockchain.service';
 import { GBN_TOKEN_ABI } from '../blockchain/abis/GBNToken.abi';
 import { formatUnits } from 'viem';
 
-const GBN_TOKEN_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+const GBN_TOKEN_ADDRESS = '0xf55E06513D31acF95C27e30C019AC3cfd934fF0C';
 
 @Injectable()
 export class TokenService {

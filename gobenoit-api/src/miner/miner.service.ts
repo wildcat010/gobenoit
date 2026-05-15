@@ -9,8 +9,8 @@ import { GBN_TOKEN_ABI } from 'src/blockchain/abis/GBNToken.abi';
 import { privateKeyToAccount } from 'viem/accounts';
 import { parseEther, formatUnits } from 'viem';
 
-const MINER_MANAGER_ADDRESS = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
-const GBN_TOKEN_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+const GBN_TOKEN_ADDRESS = '0xf55E06513D31acF95C27e30C019AC3cfd934fF0C';
+const MINER_MANAGER_ADDRESS = '0x4fFa239F0b73937Fb290f70b52C7c7410E8C742F';
 
 @Injectable()
 export class MinerService {

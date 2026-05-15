@@ -1,6 +1,6 @@
 # GoBenoit
 
-GoBenoit is a demo mining, stack with:
+GoBenoit is a demo mining stack with:
 
 - Upgradeable Solidity contracts (Foundry + OpenZeppelin UUPS proxies)
 - A NestJS API that interacts with those contracts through viem
@@ -102,33 +102,22 @@ ETHERSCAN_API_KEY=YOUR_ETHERSCAN_KEY
 
 2. Make sure deployer wallet has Sepolia ETH (from a faucet).
 
-3. Deploy to Sepolia:
+3. Deploy and verify contracts:
 
 ```bash
-forge script script/Deploy.s.sol:Deploy \
-  --rpc-url sepolia \
-  --broadcast
+forge script script/Deploy.s.sol --rpc-url sepolia --broadcast --verify
 ```
 
-4. Verify contracts (optional but recommended):
+4. Copy deployed proxy addresses from script logs.
 
-```bash
-forge script script/Deploy.s.sol:Deploy \
-  --rpc-url sepolia \
-  --broadcast \
-  --verify
-```
-
-5. Copy deployed proxy addresses from script logs.
-
-6. Update hardcoded addresses in API to the Sepolia proxies:
+5. Update hardcoded addresses in API to the Sepolia proxies:
 
 - `gobenoit-api/src/miner/miner.controller.ts` (`MINER_MANAGER_ADDRESS`)
 - `gobenoit-api/src/miner/miner.service.ts` (`MINER_MANAGER_ADDRESS`, `GBN_TOKEN_ADDRESS`)
 - `gobenoit-api/src/token/token.controller.ts` (`GBN_TOKEN_ADDRESS`)
 - `gobenoit-api/src/token/token.service.ts` (`GBN_TOKEN_ADDRESS`)
 
-7. If you also want the API to read/write Sepolia instead of local Anvil, switch chain and RPC in `gobenoit-api/src/blockchain/blockchain.service.ts`.
+6. If you also want the API to read/write Sepolia instead of local Anvil, switch chain and RPC in `gobenoit-api/src/blockchain/blockchain.service.ts`.
 
 ## Run NestJS API
 

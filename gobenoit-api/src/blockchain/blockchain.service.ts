@@ -7,7 +7,7 @@ import { anvil } from 'viem/chains';
 export class BlockchainService {
   public readonly client = createPublicClient({
     chain: anvil,
-    transport: http('http://127.0.0.1:8545'),
+    transport: http(process.env.SEPOLIA_RPC_URL),
   });
 
   getWalletClient(privateKey: `0x${string}`) {
@@ -15,7 +15,7 @@ export class BlockchainService {
     return createWalletClient({
       account,
       chain: anvil,
-      transport: http('http://127.0.0.1:8545'),
+      transport: http(process.env.SEPOLIA_RPC_URL),
     });
   }
 }
