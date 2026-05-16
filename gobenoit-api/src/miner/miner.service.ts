@@ -9,8 +9,8 @@ import { GBN_TOKEN_ABI } from 'src/blockchain/abis/GBNToken.abi';
 import { privateKeyToAccount } from 'viem/accounts';
 import { parseEther, formatUnits } from 'viem';
 
-const GBN_TOKEN_ADDRESS = '0xf55E06513D31acF95C27e30C019AC3cfd934fF0C';
 const MINER_MANAGER_ADDRESS = '0x4fFa239F0b73937Fb290f70b52C7c7410E8C742F';
+const GBN_TOKEN_ADDRESS = '0xf55E06513D31acF95C27e30C019AC3cfd934fF0C';
 
 @Injectable()
 export class MinerService {
@@ -50,7 +50,7 @@ export class MinerService {
 
     return {
       address,
-      balance: formatUnits(balance, 18) + ' GBN',
+      balance: formatUnits(balance as bigint, 18) + ' GBN',
     };
   }
 
@@ -171,5 +171,42 @@ export class MinerService {
       status: receipt.status,
       paused: pause,
     };
+  }
+
+  async getMinersList() {
+    // get current block number
+    const currentBlock = await this.blockchainService
+      .getPublicClient()
+      .getBlockNumber();
+
+    // query only the last 9 blocks (Alchemy free tier limit is 10)
+    const fromBlock = currentBlock - 9n;
+
+    const logs = await this.blockchainService.getPublicClient().getLogs({
+      address: MINER_MANAGER_ADDRESS,
+      event: {
+        name: 'MinerPurchased',
+        type: 'event',
+        inputs: [
+          { name: 'user', type: 'address', indexed: true },
+          { name: 'quantity', type: 'uint256', indexed: false },
+          { name: 'totalMiners', type: 'uint256', indexed: false },
+        ],
+      },
+      fromBlock,
+      toBlock: currentBlock,
+    });
+
+    const minersMap = new Map<string, bigint>();
+    for (const log of logs) {
+      const user = log.args.user as string;
+      const totalMiners = log.args.totalMiners as bigint;
+      minersMap.set(user, totalMiners);
+    }
+
+    return Array.from(minersMap.entries()).map(([address, miners]) => ({
+      address,
+      miners: miners.toString(),
+    }));
   }
 }

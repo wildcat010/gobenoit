@@ -18,7 +18,7 @@ export class TokenService {
         functionName: 'totalSupply',
       });
 
-    return formatUnits(totalSupply, 18);
+    return formatUnits(totalSupply as bigint, 18);
   }
 
   async pause(pause: boolean, privateKey: `0x${string}`) {
