@@ -6,6 +6,13 @@ GoBenoit is a demo mining stack with:
 - A NestJS API that interacts with those contracts through viem
 - JWT auth and MongoDB-backed users
 
+## Current Deployment (Sepolia)
+
+```ts
+const MINER_MANAGER_ADDRESS = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
+const GBN_TOKEN_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+```
+
 ## Project Structure
 
 - `src/`
@@ -147,6 +154,11 @@ npm run start:dev
 
 Base URL: `http://localhost:3000`
 
+Demo login on SEPOLIA:
+
+- Email: `a.a@a`
+- Password: `123`
+
 Public routes:
 
 - `POST /users/register`
@@ -165,6 +177,19 @@ JWT-protected routes (send `Authorization: Bearer <token>`):
 - `GET /token/total-supply`
 - `POST /token/pause`
 
+## Quick Workflow (User)
+
+1. Login with:
+
+- Email: `a.a@a`
+- Password: `123`
+
+2. Buy tokens using `POST /miner/buy-tokens` (send wallet and amount/tx payload expected by the API).
+3. Buy a miner with `POST /miner/buy-miner` (quantity and wallet/private key payload as required).
+4. Check pending rewards with `POST /miner/pending-reward`.
+5. Wait a few days so rewards accrue on-chain.
+6. Claim rewards with `POST /miner/claim-reward`.
+
 ## Important Notes
 
 - This project is for demo/testing purposes.
@@ -177,6 +202,13 @@ JWT-protected routes (send `Authorization: Bearer <token>`):
 `gobenoit-api` currently uses hardcoded contract addresses in services/controllers.
 
 After redeploying contracts, update these addresses to match your latest deployment.
+
+Current deployment (Sepolia):
+
+```ts
+const MINER_MANAGER_ADDRESS = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
+const GBN_TOKEN_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+```
 
 ## Useful Commands
 
