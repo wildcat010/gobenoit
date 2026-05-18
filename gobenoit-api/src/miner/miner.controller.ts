@@ -1,14 +1,9 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { BlockchainService } from './../blockchain/blockchain.service';
 
-import { parseEther } from 'viem';
-import { MINER_MANAGER_ABI } from 'src/blockchain/abis/minerManager.abi';
-
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from './../auth/jwt.guard';
 import { MinerService } from './miner.service';
-
-const MINER_MANAGER_ADDRESS = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
 
 @UseGuards(JwtAuthGuard)
 @Controller('miner')
@@ -55,5 +50,10 @@ export class MinerController {
   @Post('pause')
   async pause(@Body() body: { pause: boolean; privateKey: `0x${string}` }) {
     return this.minerService.pause(body.pause, body.privateKey);
+  }
+
+  @Get('miners-list')
+  async minersList() {
+    return this.minerService.getMinersList();
   }
 }

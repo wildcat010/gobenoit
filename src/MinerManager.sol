@@ -33,6 +33,9 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
         _;
     }
 
+    event MinerPurchased(address indexed user, uint256 quantity, uint256 totalMiners);
+
+
     constructor() {
         _disableInitializers();
     }
@@ -88,12 +91,14 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
 
         _claim(msg.sender);
 
-        token.burnFrom(msg.sender, totalCost); // 👈 burn all at once
+        token.burnFrom(msg.sender, totalCost); 
 
-        user.miners += quantity; // 👈 add quantity instead of 1
+        user.miners += quantity; 
 
         user.rewardDebt = user.miners * rewardIndex;
         user.feeDebt = user.miners * feeIndex;
+
+        emit MinerPurchased(msg.sender, quantity, user.miners);
     }
 
     function claim() external whenNotPaused userPurchasedOneMinerAtLeast {
