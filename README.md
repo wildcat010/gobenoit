@@ -220,6 +220,19 @@ forge test
 forge fmt
 ```
 
+Slither (security static analysis):
+
+```bash
+# Install (Python + pip required)
+pip install slither-analyzer
+
+# Analyze the MinerManager contract
+slither src/MinerManager.sol
+
+# Analyze all contracts in src/
+slither src/
+```
+
 API (`gobenoit-api/`):
 
 ```bash
