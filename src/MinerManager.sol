@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import "./GBNToken.sol";
+import "./Miner1155.sol";
 
 contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, PausableUpgradeable {
     GBNToken public token;

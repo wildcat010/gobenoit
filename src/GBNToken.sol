@@ -14,17 +14,22 @@ contract GBNToken is
     UUPSUpgradeable,
     PausableUpgradeable
 {
-    address public minerContract;
+    address public minerManager;
 
-    function initialize() public initializer {
+    modifier onlyMinerManager() {
+        require(msg.sender == minerManager, "Not MinerManager");
+        _;
+    }
+
+    function initialize(address owner_) public initializer {
         __ERC20_init("GoBenoit", "GBN");
-        __Ownable_init(msg.sender);
+        __Ownable_init(owner_);
         __Pausable_init();
     }
 
-    function setMinerContract(address _miner) external onlyOwner {
-        require(_miner != address(0), "Invalid address");
-        minerContract = _miner;
+    function setMinerManager(address _manager) external onlyOwner {
+        require(_manager != address(0), "Invalid address");
+        minerManager = _manager;
     }
 
     function pause() external onlyOwner {
@@ -35,13 +40,13 @@ contract GBNToken is
         _unpause();
     }
 
-    function mint(address to, uint256 amount) external whenNotPaused {
-        require(msg.sender == minerContract, "Not authorized");
+    function mint(address to, uint256 amount) external onlyMinerManager whenNotPaused {
+       
         _mint(to, amount);
     }
 
-    function burnFrom(address from, uint256 amount) external whenNotPaused {
-        require(msg.sender == minerContract, "Not authorized");
+    function burnFrom(address from, uint256 amount) external onlyMinerManager whenNotPaused {
+      
         _burn(from, amount);
     }
 
