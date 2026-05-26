@@ -1,0 +1,11 @@
+{
+  "name": "Pro Miner",
+  "description": "20 TH miner",
+  "image": "https://example.com/pro.png",
+  "attributes": [
+    {
+      "trait_type": "Power",
+      "value": 20
+    }
+  ]
+}
