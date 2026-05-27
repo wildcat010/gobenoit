@@ -31,7 +31,7 @@ contract GBNTokenTest is Test {
         // cast proxy to token interface
         token = GBNToken(address(proxy));
 
-        token.setMinerContract(miner);
+        token.setMinerManager(miner);
     }
 
     function testInitialization() public view {

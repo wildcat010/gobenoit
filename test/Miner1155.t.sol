@@ -32,7 +32,7 @@ contract Miner1155Test is Test {
         // cast proxy to token interface
         token = Miner1155(address(proxy));
 
-        token.setMinerContract(miner);
+        token.setMinerManager(miner);
     }
 
     function testInitialization() public view {

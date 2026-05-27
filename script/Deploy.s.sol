@@ -5,6 +5,7 @@ import "forge-std/Script.sol";
 
 import "../src/GBNToken.sol";
 import "../src/MinerManager.sol";
+import "../src/Miner1155.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -14,28 +15,30 @@ contract Deploy is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        // 1. Deploy token (implementation)
+        // Deploy token (implementation)
         GBNToken tokenImpl = new GBNToken();
-
-        // 2. Deploy token proxy
-        bytes memory tokenInitData = abi.encodeWithSelector(
-            GBNToken.initialize.selector
-        );
-
         ERC1967Proxy tokenProxy = new ERC1967Proxy(
             address(tokenImpl),
-            tokenInitData
+            abi.encodeWithSelector(GBNToken.initialize.selector)
         );
-
         GBNToken token = GBNToken(address(tokenProxy));
 
-        // 3. Deploy miner implementation
+    //deploy miner erc 1155
+        Miner1155 miner1155Impl = new Miner1155();
+        ERC1967Proxy miner1155Proxy = new ERC1967Proxy(
+            address(miner1155Impl),
+            abi.encodeWithSelector(Miner1155.initialize.selector)
+        );
+        Miner1155 miner1155 = Miner1155(address(miner1155Proxy));
+
+      //Deploy miner implementation
         MinerManager minerImpl = new MinerManager();
 
-        // 4. Deploy miner proxy
+       //Deploy miner proxy
         bytes memory minerInitData = abi.encodeWithSelector(
             MinerManager.initialize.selector,
-            address(token)
+            address(token),
+            address(miner1155)
         );
 
         ERC1967Proxy minerProxy = new ERC1967Proxy(
@@ -45,13 +48,15 @@ contract Deploy is Script {
 
         MinerManager miner = MinerManager(address(minerProxy));
 
-        // 5. Link contracts
-        token.setMinerContract(address(miner));
+        //  Link contracts
+        token.setMinerManager(address(miner));
+        miner1155.setMinerManager(address(miner));
 
         vm.stopBroadcast();
 
-        // 6. Logs (VERY useful)
+        //  Logs
         console.log("GBNToken Proxy:", address(token));
+        console.log("Miner1155 Proxy:", address(miner1155));
         console.log("MinerManager Proxy:", address(miner));
     }
 }

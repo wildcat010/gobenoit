@@ -34,17 +34,38 @@ contract Miner1155 is
     // =========================
     mapping(uint256 => uint256) public minerPower;
 
-    address public minerContract;
+    address public minerManager;
 
+    event MinerManagerUpdated(address indexed newManager);
 
-    modifier onlyMinerContract() {
-        require(msg.sender == minerContract, "Not miner contract");
-    _;
-}
+    event TokensMinted(
+        address indexed to,
+        uint256 indexed id,
+        uint256 amount
+    );
 
-    function setMinerContract(address _miner) external onlyOwner {
-        require(_miner != address(0), "Invalid address");
-        minerContract = _miner;
+    event TokensBurned(
+        address indexed from,
+        uint256 indexed id,
+        uint256 amount
+    );
+
+    modifier onlyMinerManager() {
+        require(msg.sender == minerManager, "Not miner manager");
+        _;
+    }
+
+    error InvalidMinerType();
+
+    function _isValidMiner(uint256 id) internal pure returns (bool) {
+        return id >= BASIC && id <= LEGEND;
+    }
+
+    function setMinerManager(address _manager) external onlyOwner {
+        require(_manager != address(0), "Invalid address");
+        minerManager = _manager;
+
+        emit MinerManagerUpdated(_manager);
     }
 
     // =========================
@@ -84,9 +105,11 @@ contract Miner1155 is
         address to,
         uint256 id,
         uint256 amount
-    ) external onlyMinerContract whenNotPaused  {
+    ) external onlyMinerManager whenNotPaused  {
 
-        require(id >= 1 && id <= 3, "Invalid miner type");
+        if (!_isValidMiner(id)) {
+            revert InvalidMinerType();
+        }
 
         require(
             totalMinted[id] + amount <= maxSupply[id],
@@ -96,6 +119,7 @@ contract Miner1155 is
         totalMinted[id] += amount;
 
         _mint(to, id, amount, "");
+        emit TokensMinted(to, id, amount);
     }
 
     // =========================
@@ -105,13 +129,17 @@ contract Miner1155 is
         address from,
         uint256 id,
         uint256 amount
-    ) external onlyMinerContract whenNotPaused {
+    ) external onlyMinerManager whenNotPaused {
 
-        require(totalMinted[id] >= amount, "Invalid burn");
+        if (!_isValidMiner(id)) {
+            revert InvalidMinerType();
+        }
 
         totalMinted[id] -= amount;
 
         _burn(from, id, amount);
+
+        emit TokensBurned(from, id, amount);
     }
 
     // =========================

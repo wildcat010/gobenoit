@@ -11,8 +11,10 @@ import "./Miner1155.sol";
 
 contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, PausableUpgradeable {
     GBNToken public token;
+    Miner1155 public miner1155;
 
-    uint256 public constant MINER_COST = 100 ether;
+    mapping(uint256 => uint256) public minerCost;
+
     uint256 public rate;
 
     uint256 public rewardIndex;
@@ -22,7 +24,7 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
     address public treasury;
 
     struct User {
-        uint256 miners;
+        uint256 minersPower;
         uint256 rewardDebt;
         uint256 feeDebt;
     }
@@ -30,12 +32,12 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
     mapping(address => User) public users;
 
     modifier userPurchasedOneMinerAtLeast() {
-        require(users[msg.sender].miners > 0, "Buy a miner first");
+        require(users[msg.sender].minersPower > 0, "Buy a miner first");
         _;
     }
 
-    event MinerPurchased(address indexed user, uint256 quantity, uint256 totalMiners);
-
+    event MinerPurchased(address indexed user, uint256 minerType, uint256 quantity);
+    event RewardClaimed(address indexed user, uint256 rewardAmount, uint256 feeAmount);
 
     constructor() {
         _disableInitializers();
@@ -52,7 +54,7 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
 
         uint256 currentIndex = rewardIndex + (rewardPerDay * elapsed) / 1 days;
 
-        uint256 accumulated = user.miners * currentIndex;
+        uint256 accumulated = user.minersPower * currentIndex;
 
         return accumulated - user.rewardDebt;
     }
@@ -78,10 +80,11 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
         lastUpdate = block.timestamp;
     }
 
-    function buyMiner(uint256 quantity) external whenNotPaused {
+    function buyMiner(uint256 minerId,uint256 quantity) external whenNotPaused {
         require(quantity > 0, "Quantity must be greater than 0");
+        require(minerId >= 1 && minerId <= 3, "Invalid miner");
         
-        uint256 totalCost = MINER_COST * quantity;
+        uint256 totalCost = minerCost[minerId] * quantity;
         
         // check balance before doing anything
         require(token.balanceOf(msg.sender) >= totalCost, "Insufficient GBN balance");
@@ -94,12 +97,21 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
 
         token.burnFrom(msg.sender, totalCost); 
 
-        user.miners += quantity; 
+         // mint ERC1155 miner NFT
+        miner1155.mintMiner(
+            msg.sender,
+            minerId,
+            quantity
+        );
 
-        user.rewardDebt = user.miners * rewardIndex;
-        user.feeDebt = user.miners * feeIndex;
+        user.minersPower += miner1155.minerPower(minerId) * quantity; 
 
-        emit MinerPurchased(msg.sender, quantity, user.miners);
+        _claim(msg.sender);
+
+        user.rewardDebt = user.minersPower * rewardIndex;
+        user.feeDebt = user.minersPower * feeIndex;
+
+        emit MinerPurchased(msg.sender, minerId, quantity);
     }
 
     function claim() external whenNotPaused userPurchasedOneMinerAtLeast {
@@ -108,19 +120,20 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
     }
 
     function setTreasury(address _treasury) external onlyOwner {
+        require(_treasury != address(0), "Invalid treasury");
         treasury = _treasury; 
     }
 
     function _claim(address userAddr) internal {
         User storage user = users[userAddr];
 
-        if (user.miners == 0) return;
+        if (user.minersPower == 0) return;
 
         uint256 accumulatedReward =
-            user.miners * rewardIndex;
+            user.minersPower * rewardIndex;
 
         uint256 accumulatedFee =
-            user.miners * feeIndex;
+            user.minersPower * feeIndex;
 
         uint256 pendingReward =
             accumulatedReward - user.rewardDebt;
@@ -150,6 +163,8 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
                 token.burnFrom(address(this), burnPart);
             }
         }
+
+        emit RewardClaimed(userAddr, pendingReward, pendingFee);
     }
 
     function buyTokens() external payable whenNotPaused {
@@ -167,12 +182,17 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
         _unpause();
     }
 
-    function initialize(address _token) public initializer {
+    function initialize(address _token, address _miner1155) public initializer {
         __Ownable_init(msg.sender);
         __Pausable_init();
 
         token = GBNToken(_token);
+        miner1155 = Miner1155(_miner1155);
         rate = 1000;
+
+        minerCost[1] = 100 ether;
+        minerCost[2] = 250 ether;
+        minerCost[3] = 1000 ether;
 
         lastUpdate = block.timestamp;
         treasury = msg.sender;
