@@ -6,10 +6,13 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+
+
 import "./GBNToken.sol";
 import "./Miner1155.sol";
 
-contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, PausableUpgradeable {
+contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
     GBNToken public token;
     Miner1155 public miner1155;
 
@@ -80,7 +83,7 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
         lastUpdate = block.timestamp;
     }
 
-    function buyMiner(uint256 minerId,uint256 quantity) external whenNotPaused {
+    function buyMiner(uint256 minerId,uint256 quantity) external whenNotPaused nonReentrant {
         require(quantity > 0, "Quantity must be greater than 0");
         require(minerId >= 1 && minerId <= 3, "Invalid miner");
         
@@ -114,7 +117,7 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
         emit MinerPurchased(msg.sender, minerId, quantity);
     }
 
-    function claim() external whenNotPaused userPurchasedOneMinerAtLeast {
+    function claim() external whenNotPaused userPurchasedOneMinerAtLeast nonReentrant {
         _updateIndex();
         _claim(msg.sender);
     }
@@ -167,7 +170,7 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
         emit RewardClaimed(userAddr, pendingReward, pendingFee);
     }
 
-    function buyTokens() external payable whenNotPaused {
+    function buyTokens() external payable whenNotPaused nonReentrant {
         require(msg.value > 0, "Send ETH");
 
         uint256 amount = msg.value * rate;
@@ -185,6 +188,7 @@ contract MinerManager is Initializable, OwnableUpgradeable, UUPSUpgradeable, Pau
     function initialize(address _token, address _miner1155) public initializer {
         __Ownable_init(msg.sender);
         __Pausable_init();
+        __ReentrancyGuard_init();
 
         token = GBNToken(_token);
         miner1155 = Miner1155(_miner1155);
