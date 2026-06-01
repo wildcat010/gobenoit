@@ -1,242 +1,255 @@
 # GoBenoit
 
-GoBenoit is a demo mining stack with:
+GoBenoit is a blockchain mining simulation stack built with:
 
-- Upgradeable Solidity contracts (Foundry + OpenZeppelin UUPS proxies)
-- A NestJS API that interacts with those contracts through viem
-- JWT auth and MongoDB-backed users
+Upgradeable Solidity smart contracts (Foundry + OpenZeppelin UUPS proxies)
+ERC20 + ERC1155 hybrid token economy
+NestJS backend API (viem integration)
+JWT authentication + MongoDB user system
 
-## Current Deployment (Sepolia)
+It simulates a token-powered mining game economy where users:
 
-```ts
-const MINER_MANAGER_ADDRESS = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
-const GBN_TOKEN_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
-```
+Buy ERC20 tokens (GBN)
+Use tokens to buy ERC1155 miners
+Earn rewards over time based on mining power
+Claim emissions + fees dynamically
 
-## Project Structure
+---
 
-- `src/`
-  - `GBNToken.sol`: upgradeable ERC20 token (`GoBenoit`, `GBN`) with pause and restricted mint/burn
-  - `MinerManager.sol`: miner purchase, reward accrual, fee handling, claim logic, token sale (`buyTokens`)
-- `script/Deploy.s.sol`: deploys `GBNToken` and `MinerManager` behind `ERC1967Proxy` and links them
-- `test/`: Foundry tests for token and miner behavior
-- `gobenoit-api/`: NestJS backend
-  - `users`: register/login and user lookup
-  - `miner`: buy tokens, buy miner, claim, pending reward, pause/unpause
-  - `token`: total supply and pause/unpause
-  - `blockchain`: viem public/wallet clients targeting local Anvil RPC
+# ⚙️ Current Deployment (Sepolia)
 
-## How It Works
+const GBN_TOKEN_ADDRESS = "0x...";
+const MINER_1155_ADDRESS = "0x...";
+const MINER_MANAGER_ADDRESS = "0x...";
 
-### Token (`GBNToken`)
+⚠️ These addresses must always match the latest deployment script output.
 
-- Standard ERC20 (upgradeable)
-- Only `minerContract` can call `mint` and `burnFrom`
-- Transfers/mint/burn are blocked while paused
+---
 
-### Miner Manager (`MinerManager`)
+# 📁 Project Architecture
 
-- Miner cost: `100 GBN` each
-- `buyTokens()` mints GBN based on `rate` (default 1000 GBN per 1 ETH)
-- `buyMiner(quantity)` burns user GBN and increases miner count
-- Rewards and fees are index-based and time-dependent
-- `claim()` mints rewards to user, splits fees into:
-  - 50% to treasury
-  - 50% minted then burned
+Smart Contracts (src/)
 
-## Reward and Fee Model
+🪙 GBNToken.sol (ERC20)
 
-Given normalized supply:
+Upgradeable ERC20 token:
 
-$$s = \frac{\text{totalSupply}}{1000\ \text{GBN}}$$
+Name: GoBenoit (GBN)
+Used as in-game currency
+Mint/burn restricted to MinerManager
+Pause/unpause support
 
-Reward/day per miner:
+---
 
-$$R = \frac{2\ \text{GBN} \cdot 1000}{1000 + s}$$
+⛏ Miner1155.sol (ERC1155)
 
-Fee/day per miner:
+Upgradeable ERC1155 contract representing mining hardware NFTs
 
-$$F = 1\ \text{GBN} + \frac{s}{10}\ \text{GBN}$$
+Key Features:
+ERC1155 multi-token standard
+Each token ID = different miner type
+Supports batch minting and scalable mining assets
+Fully controlled by MinerManager
+Stores miner metadata such as power per type
 
-As supply rises, reward decreases and fee increases.
+Miner Types Example:
+Miner ID Power Description
+1 Low Starter miner
+2 Medium Balanced miner
+3 High Advanced miner
 
-## Prerequisites
+Core Logic:
+Users do NOT mint directly
+Only MinerManager can mint/burn miners
+Each miner increases user mining power in reward system
 
-- Foundry installed
-- Node.js 18+
-- MongoDB running
+---
 
-## Run Contracts Locally
+🧠 MinerManager.sol (Core Game Engine)
 
-1. Start Anvil:
+Upgradeable controller contract that manages:
 
-```bash
-anvil
-```
+Token Economy
+ERC20 (GBN) interactions
+Token purchase via ETH (buyTokens)
+Burning tokens for miner purchases
 
-2. Build contracts:
+Mining System
+Tracks user mining power
+Index-based reward calculation
+Time-dependent emission system
 
-```bash
-forge build
-```
+Reward System
+Rewards accrue per miner over time
+Users call claim() to mint rewards
 
-3. Run tests:
+Fee System
+Fees are generated alongside rewards
+Split:
+50% treasury
+50% burned (deflationary mechanic)
 
-```bash
-forge test
-```
+---
 
-4. Deploy proxies with script:
+# 🔗 Contract Interaction Model
 
-```bash
-forge script script/Deploy.s.sol:Deploy \
-  --rpc-url http://127.0.0.1:8545 \
-  --broadcast \
-  --private-key <ANVIL_PRIVATE_KEY>
-```
+System Flow
 
-The deploy script logs proxy addresses for `GBNToken` and `MinerManager`.
+User
+↓ buys ETH
+MinerManager.buyTokens()
+↓ mints ERC20 (GBN)
 
-## Deploy to Sepolia
+User
+↓ spends GBN
+MinerManager.buyMiner()
+↓ burns ERC20
+Miner1155.mintMiner()
 
-1. Add environment variables in root `.env`:
+User
+↓ time passes
+MinerManager.claim()
+↓ mints rewards (ERC20)
 
-```env
-SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY
-PRIVATE_KEY=0xYOUR_WALLET_PRIVATE_KEY
-ETHERSCAN_API_KEY=YOUR_ETHERSCAN_KEY
-```
+---
 
-2. Make sure deployer wallet has Sepolia ETH (from a faucet).
+# 🪙 Token Model (ERC20 + ERC1155 Hybrid)
 
-3. Deploy and verify contracts:
+ERC20 (GBN)
 
-```bash
-forge script script/Deploy.s.sol --rpc-url sepolia --broadcast --verify
-```
+Used for:
+Purchasing miners
+Reward payouts
+Fee accounting
 
-4. Copy deployed proxy addresses from script logs.
+ERC1155 (Miner NFTs)
 
-5. Update hardcoded addresses in API to the Sepolia proxies:
+Used for:
+Representing mining hardware
+Defining mining power per asset
+Scaling multiple miner types efficiently
 
-- `gobenoit-api/src/miner/miner.controller.ts` (`MINER_MANAGER_ADDRESS`)
-- `gobenoit-api/src/miner/miner.service.ts` (`MINER_MANAGER_ADDRESS`, `GBN_TOKEN_ADDRESS`)
-- `gobenoit-api/src/token/token.controller.ts` (`GBN_TOKEN_ADDRESS`)
-- `gobenoit-api/src/token/token.service.ts` (`GBN_TOKEN_ADDRESS`)
+---
 
-6. If you also want the API to read/write Sepolia instead of local Anvil, switch chain and RPC in `gobenoit-api/src/blockchain/blockchain.service.ts`.
+# 📊 Reward Formula
 
-## Run NestJS API
+s = totalSupply / 1000 GBN
 
-Inside `gobenoit-api/`:
+R = (2 \* 1000) / (1000 + s)
 
-1. Install dependencies:
+F = 1 + s / 10
 
-```bash
-npm install
-```
+---
 
-2. Create `.env` (example):
+# 🧪 Testing
 
-```env
-PORT=3000
-MONGO_URI=mongodb://127.0.0.1:27017/gobenoit
-JWT_SECRET=replace_with_a_strong_secret
-```
-
-3. Start API:
-
-```bash
-npm run start:dev
-```
-
-## API Overview
-
-Base URL: `http://localhost:3000`
-
-Demo login on SEPOLIA:
-
-- Email: `a.a@a`
-- Password: `123`
-
-Public routes:
-
-- `POST /users/register`
-- `POST /users/login`
-
-JWT-protected routes (send `Authorization: Bearer <token>`):
-
-- `GET /users/getUserByEmail?email=...`
-- `GET /users/getAll`
-- `POST /miner/buy-tokens`
-- `GET /miner/getBalanceof?address=0x...`
-- `POST /miner/buy-miner`
-- `POST /miner/claim-reward`
-- `POST /miner/pending-reward`
-- `POST /miner/pause`
-- `GET /token/total-supply`
-- `POST /token/pause`
-
-## Quick Workflow (User)
-
-1. Login with:
-
-- Email: `a.a@a`
-- Password: `123`
-
-2. Buy tokens using `POST /miner/buy-tokens` (send wallet and amount/tx payload expected by the API).
-3. Buy a miner with `POST /miner/buy-miner` (quantity and wallet/private key payload as required).
-4. Check pending rewards with `POST /miner/pending-reward`.
-5. Wait a few days so rewards accrue on-chain.
-6. Claim rewards with `POST /miner/claim-reward`.
-
-## Important Notes
-
-- This project is for demo/testing purposes.
-- Some API endpoints accept a raw private key in the request body so the backend can sign on behalf of a wallet.
-- This pattern is not production-safe and should not be used in real systems.
-- For production, move signing to the client wallet (MetaMask, WalletConnect, hardware wallets) or a dedicated secure signer service/HSM.
-
-## Address Configuration
-
-`gobenoit-api` currently uses hardcoded contract addresses in services/controllers.
-
-After redeploying contracts, update these addresses to match your latest deployment.
-
-Current deployment (Sepolia):
-
-```ts
-const MINER_MANAGER_ADDRESS = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9';
-const GBN_TOKEN_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
-```
-
-## Useful Commands
-
-Root (Foundry):
-
-```bash
 forge build
 forge test
 forge fmt
-```
 
-Slither (security static analysis):
+---
 
-```bash
-# Install (Python + pip required)
-pip install slither-analyzer
+# 🚀 Local Deployment
 
-# Analyze the MinerManager contract
-slither src/MinerManager.sol
+anvil
 
-# Analyze all contracts in src/
-slither src/
-```
+forge script script/Deploy.s.sol:Deploy \
+ --rpc-url http://127.0.0.1:8545 \
+ --broadcast \
+ --private-key <ANVIL_KEY>
 
-API (`gobenoit-api/`):
+---
 
-```bash
-npm run start:dev
-npm run build
-npm run test
-```
+# 🌐 Sepolia Deployment
+
+SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/KEY
+PRIVATE_KEY=0xYOUR_PRIVATE_KEY
+ETHERSCAN_API_KEY=YOUR_KEY
+
+forge script script/Deploy.s.sol:Deploy \
+ --rpc-url $SEPOLIA_RPC_URL \
+ --private-key $PRIVATE_KEY \
+ --broadcast \
+ --verify -vvv
+
+---
+
+# 🔍 Contract Verification
+
+GBNToken
+forge verify-contract <TOKEN_PROXY> src/GBNToken.sol:GBNToken \
+ --chain-id 11155111 \
+ --etherscan-api-key $ETHERSCAN_API_KEY
+
+Miner1155
+forge verify-contract <MINER_1155_PROXY> src/Miner1155.sol:Miner1155 \
+ --chain-id 11155111 \
+ --etherscan-api-key $ETHERSCAN_API_KEY
+
+MinerManager
+forge verify-contract <MANAGER_PROXY> src/MinerManager.sol:MinerManager \
+ --chain-id 11155111 \
+ --etherscan-api-key $ETHERSCAN_API_KEY
+
+---
+
+# 🧠 API (NestJS)
+
+Backend uses viem to interact with contracts.
+
+Modules:
+users: auth + registration
+miner: buy miners, claim rewards, pending rewards
+token: balance, total supply, pause
+blockchain: RPC + wallet config
+
+---
+
+# 🔐 API Security Note
+
+⚠️ Current demo design:
+
+Private keys can be passed to backend
+Backend signs transactions
+
+❌ Not production safe
+
+✔ Recommended production upgrade:
+
+Wallet signing (MetaMask / WalletConnect)
+Or secure signer service (HSM / backend vault)
+
+---
+
+# 🔄 Upgrade System (UUPS)
+
+All contracts are upgradeable:
+
+GBNToken → ERC20 logic upgrades
+Miner1155 → miner logic upgrades
+MinerManager → game logic upgrades
+
+Upgrade flow:
+
+Proxy → Implementation → upgradeToAndCall()
+
+---
+
+# ⚠️ Important Notes
+
+Always use proxy addresses, not implementation addresses
+ERC1155 miners = gameplay assets
+ERC20 = economy layer
+MinerManager = single source of truth
+
+---
+
+# 🧩 Summary
+
+GoBenoit is a hybrid system combining:
+
+ERC20 (currency layer)
+ERC1155 (asset/miner layer)
+Upgradeable architecture (UUPS)
+Time-based reward emission system
+Game-like mining economy

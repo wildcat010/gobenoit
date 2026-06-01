@@ -7,10 +7,10 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-contract GBNToken is 
-    Initializable, 
-    ERC20Upgradeable, 
-    OwnableUpgradeable, 
+contract GBNToken is
+    Initializable,
+    ERC20Upgradeable,
+    OwnableUpgradeable,
     UUPSUpgradeable,
     PausableUpgradeable
 {
@@ -18,65 +18,42 @@ contract GBNToken is
 
     event MinerManagerUpdated(address indexed newManager);
 
-    event TokensMinted(
-        address indexed to,
-        uint256 amount
-    );
-
-    event TokensBurned(
-        address indexed from,
-        uint256 amount
-    );
+    function initialize(address owner_) public initializer {
+        __ERC20_init("GoBenoit", "GBN");
+        __Ownable_init(owner_);
+        __UUPSUpgradeable_init();
+        __Pausable_init();
+    }
 
     modifier onlyMinerManager() {
         require(msg.sender == minerManager, "Not MinerManager");
         _;
     }
 
-    function initialize(address owner_) public initializer {
-        __ERC20_init("GoBenoit", "GBN");
-        __Ownable_init(owner_);
-        __Pausable_init();
-    }
-
     function setMinerManager(address _manager) external onlyOwner {
         require(_manager != address(0), "Invalid address");
         minerManager = _manager;
-
         emit MinerManagerUpdated(_manager);
     }
 
-    function pause() external onlyOwner {
-        _pause();
-    }
-
-    function unpause() external onlyOwner {
-        _unpause();
-    }
-
-    function mint(address to, uint256 amount) external onlyMinerManager whenNotPaused {
-       
-        _mint(to, amount);
-        emit TokensMinted(to, amount);
-    }
-
-    function burnFrom(address from, uint256 amount) external onlyMinerManager whenNotPaused {
-      
-        _burn(from, amount);
-        emit TokensBurned(from, amount);
-    }
-
-    function _update(address from, address to, uint256 amount)
-        internal
-        override
+    function mint(address to, uint256 amount)
+        external
+        onlyMinerManager
         whenNotPaused
     {
-        super._update(from, to, amount);
+        _mint(to, amount);
     }
 
-    function _authorizeUpgrade(address newImplementation)
-        internal
-        override
-        onlyOwner
-    {}
+    function burnFrom(address from, uint256 amount)
+        external
+        onlyMinerManager
+        whenNotPaused
+    {
+        _burn(from, amount);
+    }
+
+    function pause() external onlyOwner { _pause(); }
+    function unpause() external onlyOwner { _unpause(); }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

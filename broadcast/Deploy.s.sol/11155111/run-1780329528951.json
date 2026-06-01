@@ -1,7 +1,7 @@
 {
   "transactions": [
     {
-      "hash": "0x926daa319acb84d8bb591323c212204f2a30c00483c9881d71223cbec4a72ebc",
+      "hash": "0x9521ec3166fcef52532e0ee02e2b97e3f7645981cf2408e4ea76af577aacd534",
       "transactionType": "CREATE",
       "contractName": "GBNToken",
       "contractAddress": "0xd6e60473dbb7d66e94eefcae8f2191e3b6ce14ed",
@@ -19,7 +19,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x0e4356191a0cc62c64e3292b144e312edae752055dbe5a428405a3b5bb9b8055",
+      "hash": "0xa3a01a3b4b656ff8853c6cd4205ce2e41a96f46d8b111c7da234030d415a2e4f",
       "transactionType": "CREATE",
       "contractName": "ERC1967Proxy",
       "contractAddress": "0x456a21c55f215d87de89e6648bddcfad32314b58",
@@ -40,7 +40,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x2e89df7282720ed911e5033bc2498117e4e723de39c0bc59580d7938205e4430",
+      "hash": "0xfd9a93abcaeac2bfd77c7e9fdb51630add480ca3cc2673a88ee1c31ffc4d740d",
       "transactionType": "CREATE",
       "contractName": "Miner1155",
       "contractAddress": "0xc5b6df401e877574616309110a006bec4c5d1c33",
@@ -58,7 +58,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": null,
+      "hash": "0x8284bae1c53221a07c60ffb68e4dee2bb29d5cfb09ad0f01feb67b8651f45590",
       "transactionType": "CREATE",
       "contractName": "ERC1967Proxy",
       "contractAddress": "0x30ab54117951876a5a5f86a1498b8890e5406f88",
@@ -79,7 +79,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": null,
+      "hash": "0x26f7e46d6a21de0303cd97a7919e8fdbc45e86304f47cd0308dd42010084a9cf",
       "transactionType": "CREATE",
       "contractName": "MinerManager",
       "contractAddress": "0x6375a666cd0e1c906e3b6a4a61935beb53e58cfb",
@@ -159,12 +159,14 @@
   "receipts": [],
   "libraries": [],
   "pending": [
-    "0x926daa319acb84d8bb591323c212204f2a30c00483c9881d71223cbec4a72ebc",
-    "0x0e4356191a0cc62c64e3292b144e312edae752055dbe5a428405a3b5bb9b8055",
-    "0x2e89df7282720ed911e5033bc2498117e4e723de39c0bc59580d7938205e4430"
+    "0x9521ec3166fcef52532e0ee02e2b97e3f7645981cf2408e4ea76af577aacd534",
+    "0xa3a01a3b4b656ff8853c6cd4205ce2e41a96f46d8b111c7da234030d415a2e4f",
+    "0xfd9a93abcaeac2bfd77c7e9fdb51630add480ca3cc2673a88ee1c31ffc4d740d",
+    "0x8284bae1c53221a07c60ffb68e4dee2bb29d5cfb09ad0f01feb67b8651f45590",
+    "0x26f7e46d6a21de0303cd97a7919e8fdbc45e86304f47cd0308dd42010084a9cf"
   ],
   "returns": {},
-  "timestamp": 1780329699527,
+  "timestamp": 1780329528951,
   "chain": 11155111,
   "commit": "2d4a777"
 }

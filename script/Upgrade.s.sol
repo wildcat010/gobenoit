@@ -2,24 +2,50 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
+import "forge-std/console.sol";
+
+import "../src/GBNToken.sol";
+import "../src/Miner1155.sol";
 import "../src/MinerManager.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract Upgrade is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        vm.startBroadcast(deployerPrivateKey);
+        uint256 pk = vm.envUint("PRIVATE_KEY");
 
-        // deploy new implementation
-        MinerManager newImpl = new MinerManager();
+        vm.startBroadcast(pk);
 
-        // upgrade proxy to new implementation
-        MinerManager proxy = MinerManager(0x4fFa239F0b73937Fb290f70b52C7c7410E8C742F); // your existing proxy
-        proxy.upgradeToAndCall(address(newImpl), "");
+        // -------------------------
+        // 1. Upgrade GBNToken
+        // -------------------------
+        GBNToken tokenProxy =
+            GBNToken(0x456a21C55f215d87dE89e6648BddcfaD32314b58);
+
+        GBNToken newTokenImpl = new GBNToken();
+
+        tokenProxy.upgradeToAndCall(address(newTokenImpl), "");
+
+        // -------------------------
+        // 2. Upgrade Miner1155
+        // -------------------------
+        Miner1155 minerProxy =
+            Miner1155(0x30ab54117951876A5A5f86A1498b8890e5406F88);
+
+        Miner1155 newMinerImpl = new Miner1155();
+
+        minerProxy.upgradeToAndCall(address(newMinerImpl), "");
+
+        // -------------------------
+        // 3. Upgrade MinerManager
+        // -------------------------
+        MinerManager managerProxy =
+            MinerManager(0x52491C74e7Df3aB94Fb2Db7D42BDe290040A9A74);
+
+        MinerManager newManagerImpl = new MinerManager();
+
+        managerProxy.upgradeToAndCall(address(newManagerImpl), "");
 
         vm.stopBroadcast();
 
-        console.log("New MinerManager implementation:", address(newImpl));
-        console.log("Proxy address unchanged:", address(proxy));
+        console.log("Upgrade complete");
     }
 }

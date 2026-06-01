@@ -19,7 +19,7 @@ contract Deploy is Script {
         GBNToken tokenImpl = new GBNToken();
         ERC1967Proxy tokenProxy = new ERC1967Proxy(
             address(tokenImpl),
-            abi.encodeWithSelector(GBNToken.initialize.selector)
+            abi.encodeWithSelector(GBNToken.initialize.selector, msg.sender)
         );
         GBNToken token = GBNToken(address(tokenProxy));
 
@@ -27,7 +27,7 @@ contract Deploy is Script {
         Miner1155 miner1155Impl = new Miner1155();
         ERC1967Proxy miner1155Proxy = new ERC1967Proxy(
             address(miner1155Impl),
-            abi.encodeWithSelector(Miner1155.initialize.selector)
+            abi.encodeWithSelector(Miner1155.initialize.selector, msg.sender)
         );
         Miner1155 miner1155 = Miner1155(address(miner1155Proxy));
 
