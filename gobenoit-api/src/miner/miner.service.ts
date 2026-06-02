@@ -6,11 +6,13 @@ import {
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { MINER_MANAGER_ABI } from 'src/blockchain/abis/minerManager.abi';
 import { GBN_TOKEN_ABI } from 'src/blockchain/abis/GBNToken.abi';
+import { MINER_1155_ABI } from 'src/blockchain/abis/Miner1155.abi';
 import { privateKeyToAccount } from 'viem/accounts';
 import { parseEther, formatUnits } from 'viem';
 
-const MINER_MANAGER_ADDRESS = '0x4fFa239F0b73937Fb290f70b52C7c7410E8C742F';
-const GBN_TOKEN_ADDRESS = '0xf55E06513D31acF95C27e30C019AC3cfd934fF0C';
+const MINER_MANAGER_ADDRESS = '0x52491C74e7Df3aB94Fb2Db7D42BDe290040A9A74';
+const GBN_TOKEN_ADDRESS = '0x456a21C55f215d87dE89e6648BddcfaD32314b58';
+const MINER_1155_ADDRESS = '0x30ab54117951876A5A5f86A1498b8890e5406F88';
 
 @Injectable()
 export class MinerService {
@@ -208,5 +210,38 @@ export class MinerService {
       address,
       miners: miners.toString(),
     }));
+  }
+
+  private async getSupplyForMinerType(minerType: 1 | 2 | 3) {
+    const client = this.blockchainService.getPublicClient();
+
+    const [maxSupply, totalMinted] = await Promise.all([
+      client.readContract({
+        address: MINER_1155_ADDRESS,
+        abi: MINER_1155_ABI,
+        functionName: 'maxSupply',
+        args: [BigInt(minerType)],
+      }),
+      client.readContract({
+        address: MINER_1155_ADDRESS,
+        abi: MINER_1155_ABI,
+        functionName: 'totalMinted',
+        args: [BigInt(minerType)],
+      }),
+    ]);
+
+    return {
+      minerType,
+      max: Number(maxSupply),
+      supply: Number(totalMinted),
+    };
+  }
+
+  async getAvailableMiners() {
+    return Promise.all([
+      this.getSupplyForMinerType(1),
+      this.getSupplyForMinerType(2),
+      this.getSupplyForMinerType(3),
+    ]);
   }
 }

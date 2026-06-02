@@ -56,4 +56,9 @@ export class MinerController {
   async minersList() {
     return this.minerService.getMinersList();
   }
+
+  @Get('getAvailable-miners')
+  async getAvailableMiners() {
+    return this.minerService.getAvailableMiners();
+  }
 }
