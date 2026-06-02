@@ -233,7 +233,7 @@ export class MinerService {
     return {
       minerType,
       max: Number(maxSupply),
-      supply: Number(totalMinted),
+      supply: Number(maxSupply) - Number(totalMinted),
     };
   }
 
